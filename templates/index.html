@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chroma 控制台</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧊</text></svg>" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◆</span>
+      <span>Chroma 控制台</span>
+    </div>
+
+    <div class="db-picker">
+      <label for="dbSelect">数据库</label>
+      <select id="dbSelect"></select>
+      <button class="btn" id="btnNewDb">新建</button>
+      <button class="btn btn-ghost-danger" id="btnDelDb">删除</button>
+    </div>
+
+    <div class="path" title="数据持久化目录">{{ data_dir }}</div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <div class="side-head">
+        <span>集合</span>
+        <button class="btn btn-sm" id="btnNewCol">+ 新建</button>
+      </div>
+      <ul class="col-list" id="colList"></ul>
+    </aside>
+
+    <section class="content">
+      <div class="content-head">
+        <div>
+          <h1 id="colTitle">未选择集合</h1>
+          <div class="sub" id="colMeta">从左侧选择一个集合开始管理文档</div>
+        </div>
+        <button class="btn btn-primary" id="btnAddDoc" disabled>+ 新增文档</button>
+      </div>
+
+      <div class="toolbar">
+        <select id="searchMode" class="select-sm">
+          <option value="keyword">关键词</option>
+          <option value="semantic">语义检索</option>
+        </select>
+        <input id="searchInput" type="search" placeholder="输入内容后回车检索…" disabled />
+        <button class="btn" id="btnSearch" disabled>搜索</button>
+        <button class="btn btn-ghost" id="btnReset" disabled>重置</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="col-id">ID</th>
+              <th>文档内容</th>
+              <th class="col-meta">元数据</th>
+              <th class="col-dist" id="thDist" hidden>距离</th>
+              <th class="col-act">操作</th>
+            </tr>
+          </thead>
+          <tbody id="docBody"></tbody>
+        </table>
+        <div class="empty" id="emptyState">暂无数据</div>
+      </div>
+
+      <div class="pager">
+        <span id="pageInfo" class="sub"></span>
+        <div class="pager-btns">
+          <button class="btn btn-sm" id="btnPrev">上一页</button>
+          <button class="btn btn-sm" id="btnNext">下一页</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 新建数据库 -->
+  <dialog class="modal" id="dbModal">
+    <form method="dialog" id="dbForm" autocomplete="off">
+      <h2>新建数据库</h2>
+      <label>名称<input name="name" required placeholder="例如 my_database" /></label>
+      <p class="hint">3–512 个字符，仅限字母、数字、. _ -，且首尾为字母或数字。</p>
+      <footer>
+        <button type="button" class="btn" data-close>取消</button>
+        <button class="btn btn-primary" value="ok">创建</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- 新建集合 -->
+  <dialog class="modal" id="colModal">
+    <form method="dialog" id="colForm">
+      <h2>新建集合</h2>
+      <label>名称<input name="name" required placeholder="例如 documents" /></label>
+      <label>距离度量
+        <select name="space">
+          <option value="">默认 (l2)</option>
+          <option value="cosine">cosine 余弦</option>
+          <option value="l2">l2 欧氏</option>
+          <option value="ip">ip 内积</option>
+        </select>
+      </label>
+      <label>元数据（JSON，可选）<textarea name="metadata" rows="3" placeholder='{"desc": "知识库"}'></textarea></label>
+      <footer>
+        <button type="button" class="btn" data-close>取消</button>
+        <button class="btn btn-primary" value="ok">创建</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- 文档新增 / 编辑 -->
+  <dialog class="modal modal-lg" id="docModal">
+    <form method="dialog" id="docForm">
+      <h2 id="docModalTitle">新增文档</h2>
+      <label>ID<input name="id" required placeholder="唯一标识，例如 doc-001" /></label>
+      <label>文档内容<textarea name="document" rows="7" required placeholder="写入的文本，将自动生成向量"></textarea></label>
+      <label>元数据（JSON，可选）<textarea name="metadata" rows="3" placeholder='{"source": "web", "page": 1}'></textarea></label>
+      <footer>
+        <button type="button" class="btn" data-close>取消</button>
+        <button class="btn btn-primary" value="ok">保存</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" hidden></div>
+  <div class="loading" id="loading" hidden><span class="spinner"></span></div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
