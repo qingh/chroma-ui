@@ -55,5 +55,4 @@ app.py                Flask 后端与 REST 接口
 templates/index.html  单页界面
 static/style.css      样式
 static/app.js         前端逻辑
-1.py                  最初的 Chroma 上手示例
 ```
