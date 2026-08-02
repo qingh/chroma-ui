@@ -16,6 +16,7 @@ from chromadb.config import DEFAULT_TENANT, Settings
 from chromadb.errors import ChromaError, NotFoundError
 from flask import Flask, jsonify, render_template, request
 from flask.json.provider import DefaultJSONProvider
+from werkzeug.exceptions import HTTPException
 
 from config import CHROMA_DB_PATH
 
@@ -149,8 +150,17 @@ def _handle_api_error(exc: ApiError):
 
 @app.errorhandler(Exception)
 def _handle_error(exc: Exception):
+    # HTTP 异常（404/405/...）走对应状态码，不再被当成 500
+    if isinstance(exc, HTTPException):
+        if request.path.startswith("/api/"):
+            return (
+                jsonify({"error": exc.description, "path": request.path}),
+                exc.code or 404,
+            )
+        return exc  # 非 API 路径让 Flask 渲染默认 404 页
+    # 真正未知的服务器异常
+    app.logger.exception("服务端异常 %s %s", request.method, request.path)
     if request.path.startswith("/api/"):
-        app.logger.exception("接口异常")
         return jsonify({"error": f"{type(exc).__name__}: {exc}"}), 500
     raise exc
 
